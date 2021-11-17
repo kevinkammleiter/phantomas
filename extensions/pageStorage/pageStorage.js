@@ -4,17 +4,22 @@
 "use strict";
 
 module.exports = function (phantomas) {
+
+    const 
+        SESSION_STORAGE = "sessionStorage",
+        LOCAL_STORAGE = "localStorage";
+
     phantomas.on("init", async (page) => {
-        const sessionStorage = phantomas.getParam("sessionStorage");
-        const localStorage = phantomas.getParam("localStorage");
+        const sessionStorage = phantomas.getParam(SESSION_STORAGE);
+        const localStorage = phantomas.getParam(LOCAL_STORAGE);
 
         if (sessionStorage) {
             phantomas.log("Injecting sessionStorage: %j", JSON.stringify(sessionStorage));
-            await injectStorage(page, sessionStorage, "sessionStorage");
+            await injectStorage(page, sessionStorage, SESSION_STORAGE);
         }
         if (localStorage) {
             phantomas.log("Injecting localStorag: %j", JSON.stringify(localStorage));
-            await injectStorage(page, localStorage, "localStorage");
+            await injectStorage(page, localStorage, LOCAL_STORAGE);
         }
     });
 
@@ -23,7 +28,7 @@ module.exports = function (phantomas) {
      * Either localStorage or sessionStorage
      * 
      * @param {Page} page in which page the storage should be injected
-     * @param {Map} storage the JSON object consisting of the storage keys and values
+     * @param {Object} storage the JSON object consisting of the storage keys and values
      * @param {string} storageType either localStorage or sessionStorage
      */
     async function injectStorage(page, storage, storageType) {
@@ -31,19 +36,19 @@ module.exports = function (phantomas) {
             return;
         }
 
-        await page.evaluateOnNewDocument((storage, storageType) => {
+        await page.evaluateOnNewDocument((storage, storageType, SESSION_STORAGE, LOCAL_STORAGE) => {
             const keys = Object.keys(storage);
             const values = Object.values(storage);
-            if (storageType === "sessionStorage") {
+            if (storageType === SESSION_STORAGE) {
                 for (let i = 0; i < keys.length; i++) {
                     sessionStorage.setItem(keys[i], values[i]);
                 }
             }
-            if (storageType === "localStorage") {
+            if (storageType === LOCAL_STORAGE) {
                 for (let i = 0; i < keys.length; i++) {
                     localStorage.setItem(keys[i], values[i]);
                 }
             }
-        }, storage, storageType);
+        }, storage, storageType, SESSION_STORAGE, LOCAL_STORAGE);
     }
 };
